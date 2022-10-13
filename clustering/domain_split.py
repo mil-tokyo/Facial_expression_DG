@@ -4,6 +4,9 @@ import torch
 from torch.utils.data import DataLoader
 from clustering import clustering
 from scipy.optimize import linear_sum_assignment
+from tqdm import tqdm
+# import torch.multiprocessing
+# torch.multiprocessing.set_sharing_strategy('file_system')
 
 def calc_mean_std(feat, eps=1e-5):
     # eps is a small value added to the variance to avoid divide-by-zero.
@@ -43,7 +46,7 @@ def compute_features(dataloader, model, N, device):
 
 def compute_instance_stat(dataloader, model, N, device):
     model.eval()
-    for i, (input_tensor, _, _) in enumerate(dataloader):
+    for i, (input_tensor, _, _) in enumerate(tqdm(dataloader, ncols=80)):
         with torch.no_grad():
             input_var = input_tensor.to(device)
             conv_feats = model.conv_features(input_var)

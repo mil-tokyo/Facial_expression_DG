@@ -1,10 +1,10 @@
-from torchvision.models import resnet18
+from torchvision.models import resnet50
 from model.Discriminator import Discriminator
 import torch.nn as nn
 import torch.nn.init as init
 
 def resnet(num_classes, num_domains=None, pretrained=True):
-    model = resnet18(pretrained=pretrained)
+    model = resnet50(pretrained=pretrained)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, num_classes)
     nn.init.xavier_uniform_(model.fc.weight, .1)
@@ -16,7 +16,7 @@ class DGresnet(nn.Module):
         super(DGresnet, self).__init__()
         self.num_domains = num_domains
         self.base_model = resnet(num_classes=num_classes, pretrained=pretrained)
-        self.discriminator = Discriminator([512, 1024, 1024, num_domains], grl=grl, reverse=True)
+        self.discriminator = Discriminator([2048, 4096, 4096, num_domains], grl=grl, reverse=True)
         
     def forward(self, x):
         x = self.base_model.conv1(x)

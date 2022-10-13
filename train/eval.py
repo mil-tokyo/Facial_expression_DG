@@ -1,5 +1,7 @@
 from torch import nn
 import torch
+from tqdm import tqdm
+
 
 def eval_model(model, eval_data, device, epoch, filename):
     criterion = nn.CrossEntropyLoss()
@@ -8,7 +10,7 @@ def eval_model(model, eval_data, device, epoch, filename):
     running_corrects = 0
     # Iterate over data.
     data_num = 0
-    for inputs, labels in eval_data:
+    for inputs, labels in tqdm(eval_data, ncols=100):
         with torch.no_grad():
             inputs = inputs.to(device)
             labels = labels.to(device)
@@ -25,7 +27,10 @@ def eval_model(model, eval_data, device, epoch, filename):
     epoch_loss = running_loss / len(eval_data.dataset)
     epoch_acc = running_corrects / len(eval_data.dataset)
     log = 'Eval: Epoch: {} Loss: {:.4f} Acc: {:.4f}'.format(epoch, epoch_loss, epoch_acc)
+    # logger.add_scalar('val/loss', epoch_loss, epoch)
+    # logger.add_scalar('val/acc', epoch_acc, epoch)
+
     print(log)
     with open(filename, 'a') as f: 
         f.write(log + '\n')
-    return epoch_acc
+    return epoch_loss, epoch_acc

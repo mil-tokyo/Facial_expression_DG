@@ -3,15 +3,17 @@ from util.util import split_domain
 import torch
 from numpy.random import *
 import numpy as np
+from tqdm import tqdm
 
-def train(model, train_data, optimizers, device, epoch, num_epoch, filename, entropy=None, disc_weight=None, entropy_weight=None, grl_weight=None):
+def train(model, train_data, optimizers, device, epoch, num_epoch, filename, logger,
+          entropy=None, disc_weight=None, entropy_weight=None, grl_weight=None):
     criterion = nn.CrossEntropyLoss()
 
     model.train()  # Set model to training mode
     running_loss = 0.0
     running_corrects = 0
     # Iterate over data.
-    for inputs, labels in train_data:
+    for inputs, labels in tqdm(train_data, ncols=100):
         inputs = inputs.to(device)
         labels = labels.to(device)
         # zero the parameter gradients
@@ -31,6 +33,10 @@ def train(model, train_data, optimizers, device, epoch, num_epoch, filename, ent
     epoch_acc = running_corrects.double() / len(train_data.dataset)
     
     log = 'Train: Epoch: {} Loss: {:.4f} Acc: {:.4f}'.format(epoch, epoch_loss, epoch_acc)
+    # logger.add_scalar('train/alph', alpha, epoch)
+    logger.add_scalar('train/loss', epoch_loss, epoch)
+    logger.add_scalar('train/acc', epoch_acc, epoch)
+
     print(log)
     with open(filename, 'a') as f: 
         f.write(log + '\n') 

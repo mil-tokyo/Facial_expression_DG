@@ -34,9 +34,12 @@ def set_parameter_requires_grad(model, feature_extracting):
         for param in model.parameters():
             param.requires_grad = False
             
-def split_domain(domains, split_idx, print_domain=True):
+def split_domain(domains, test_domains, print_domain=True):
     source_domain = deepcopy(domains)
-    target_domain = [source_domain.pop(split_idx)]
+    target_domain = []
+    for test_domain in test_domains:
+        source_domain.remove(test_domain)
+        target_domain.append(test_domain)
     if print_domain:
         print('Source domain: ', end='')
         for domain in source_domain:
@@ -47,10 +50,11 @@ def split_domain(domains, split_idx, print_domain=True):
     return source_domain, target_domain
     
 domain_map = {
-    'PACS': ['photo', 'art_painting', 'cartoon', 'sketch'],
-    'PACS_random_split': ['photo', 'art_painting', 'cartoon', 'sketch'],
-    'OfficeHome': ['Art', 'Clipart', 'Product', 'RealWorld'],
-    'VLCS': ['Caltech', 'Labelme', 'Pascal', 'Sun']
+    # 'PACS': ['photo', 'art_painting', 'cartoon', 'sketch'],
+    # 'PACS_random_split': ['photo', 'art_painting', 'cartoon', 'sketch'],
+    # 'OfficeHome': ['Art', 'Clipart', 'Product', 'RealWorld'],
+    # 'VLCS': ['Caltech', 'Labelme', 'Pascal', 'Sun']
+    'Facial_exp': ['AffectNet', 'FER2013', 'KDEF', 'CK', 'JAFFE']
 }
 
 def get_domain(name):

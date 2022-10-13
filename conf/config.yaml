@@ -1,0 +1,50 @@
+out: ???
+gpu: ???
+data_server: umihebi
+# log_dir: result
+num_class: 7
+dataset_list_dir: '/data/unagi0/kurose/data/MS/Facial_expression/'
+log_dir: '/data/unagi0/kurose/experiment_data/MS/Facial_expression_DG/result'
+data: Facial_exp
+test_domain: ['CK', 'JAFFE']
+
+train: deepall
+model: resnet
+epoch: 50
+eval_step: 1
+save_step: 10
+
+lr: 0.0001
+lr_step: 24
+momentum: 0.9
+weight_decay: 5e-4
+nesterov: True
+lr_decay_gamma: 0.1
+
+scheduler: step
+
+batch_size: 128
+
+clustering: False
+num_clustering: 3
+clustering_method: Kmeans
+clustering_step: 1
+entropy: default
+
+color_jitter: False
+min_scale: 0.8
+
+fc_weight: 10.0
+disc_weight: 10.0
+loss_disc_weight: False
+entropy_weight: 1.0
+grl_weight: 1.0
+
+instance_stat: True
+feature_fixed: False
+
+hydra:
+  job:
+    chdir: True
+  run:
+    dir: ${log_dir}/${now:%Y%m%d%H%M}_${out}

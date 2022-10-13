@@ -5,8 +5,10 @@ from numpy.random import *
 import numpy as np
 from loss.EntropyLoss import HLoss
 from loss.MaximumSquareLoss import MaximumSquareLoss
+from tqdm import tqdm
 
-def train(model, train_data, optimizers, device, epoch, num_epoch, filename, entropy, disc_weight=None, entropy_weight=1.0, grl_weight=1.0):
+def train(model, train_data, optimizers, device, epoch, num_epoch, filename, entropy, logger,
+          disc_weight=None, entropy_weight=1.0, grl_weight=1.0):
     class_criterion = nn.CrossEntropyLoss()
     print(disc_weight)
     domain_criterion = nn.CrossEntropyLoss(weight=disc_weight)
@@ -25,7 +27,7 @@ def train(model, train_data, optimizers, device, epoch, num_epoch, filename, ent
     running_correct_domain = 0
     running_loss_entropy = 0
     # Iterate over data.
-    for inputs, labels, domains in train_data:
+    for inputs, labels, domains in tqdm(train_data, ncols=100):
         inputs = inputs.to(device)
         labels = labels.to(device)
         domains = domains.to(device)
@@ -60,6 +62,13 @@ def train(model, train_data, optimizers, device, epoch, num_epoch, filename, ent
     
     log = 'Train: Epoch: {} Alpha: {:.4f} Loss Class: {:.4f} Acc Class: {:.4f}, Loss Domain: {:.4f} Acc Domain: {:.4f} Loss Entropy: {:.4f}'.format(epoch, alpha, epoch_loss_class, epoch_acc_class, epoch_loss_domain, epoch_acc_domain, epoch_loss_entropy)
     print(log)
+    logger.add_scalar('train/alph', alpha, epoch)
+    logger.add_scalar('train/loss_class', epoch_loss_class, epoch)
+    logger.add_scalar('train/acc_class', epoch_acc_class, epoch)
+    logger.add_scalar('train/loss_domain', epoch_loss_domain, epoch)
+    logger.add_scalar('train/acc_domain', epoch_acc_domain, epoch)
+    logger.add_scalar('train/loss_entropy', epoch_loss_entropy, epoch)
+
     with open(filename, 'a') as f: 
         f.write(log + '\n') 
     return model, optimizers
