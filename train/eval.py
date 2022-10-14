@@ -34,3 +34,14 @@ def eval_model(model, eval_data, device, epoch, filename):
     with open(filename, 'a') as f: 
         f.write(log + '\n')
     return epoch_loss, epoch_acc
+
+
+def eval_demo(model, inputs, device):
+    model.eval()
+    inputs = inputs.to(device)
+
+    output = model(inputs)
+    output = nn.Softmax(output)
+
+    return output.to('cpu').detach()
+
