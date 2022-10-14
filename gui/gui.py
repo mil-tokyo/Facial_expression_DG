@@ -47,46 +47,98 @@ class FacialExpressionDemo:
         return output
 
 
-class MyFrame(wx.Frame): 
+class VideoView(wx.StaticBitmap):
+    def __init__(self, parent, id, image):
+        super(VideoView, self).__init__(parent, id, image)
+        self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+        self.image = image
+
+    def set_image(self, image):
+        self.image = image
+        self.SetBitmap(image)
+        self.Refresh(False)
+
+    def on_size(self, event):
+        event.Skip()
+        self.Refresh(False)
+
+    def on_paint(self, event):
+        if not self.image:
+            return
+
+        dc = wx.AutoBufferedPaintDC(self)
+        dc.Clear()
+        dc.DrawBitmap(self.image, 0, 0, True)
+
+
+
+class MyFrame(wx.Frame):
     def __init__(self, parent, title, model_name, train, num_domains, path):
         super(MyFrame, self).__init__(parent=parent, title=title)
         self.Bind(wx.EVT_CLOSE, self.frame_close)
         self.stopFlag = False
 
         self.demo = FacialExpressionDemo(model_name=model_name, train=train, num_class=7, num_domains=num_domains, device=0, path=path)
+        panel = wx.Panel(self, wx.ID_ANY)
+        img = wx.Image(640, 480)
+        self.video_frame = VideoView(panel, wx.ID_ANY, wx.Bitmap(img))
 
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.video_frame)
 
-        # Read 1st frame
-        ret, image = cap.read()
-        image = cv2.flip(image, 1)
-        cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # # Read 1st frame
+        # ret, image = cap.read()
+        # image = cv2.flip(image, 1)
+        # cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # output = demo.evaluation(image)
-
-        self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
-        bitmap = self.wximage.ConvertToBitmap()
-        self.stbmp = wx.StaticBitmap(self, -1, bitmap, (0, 0), self.GetClientSize())
-        # ビットマップを表示
-        self.SetSize(self.wximage.GetSize())
-        # フレームの大きさを画像サイズに合わせる
+        #
+        # self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
+        # bitmap = self.wximage.ConvertToBitmap()
+        # self.stbmp = wx.StaticBitmap(self, -1, bitmap, (0, 0), self.GetClientSize())
+        # # ビットマップを表示
+        # self.SetSize(self.wximage.GetSize())
+        # # フレームの大きさを画像サイズに合わせる
         self.stream()
 
     def stream(self):
+        ret, image = cap.read()
+        self.video_frame.set_image(self.create_wx_bitmap_from_cv2_image(image))
+        wx.CallLater(30, self.stream)
 
-        def updateFrame():
-            if self.stopFlag:
-                return
-            ret, image = cap.read()
-            image = cv2.flip(image, 1)
-            cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            output = self.demo.evaluation(cv2image)
-            self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
-            bitmap = self.wximage.ConvertToBitmap()
-            self.stbmp.SetBitmap(bitmap)
+        # def updateFrame():
+        #     if self.stopFlag:
+        #         return
+        #     ret, image = cap.read()
+        #     image = cv2.flip(image, 1)
+        #     cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #     output = self.demo.evaluation(cv2image)
+        #     self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
+        #     bitmap = self.wximage.ConvertToBitmap()
+        #     self.stbmp.SetBitmap(bitmap)
 
 
-            # bitmapの再描画
-            wx.CallLater(33, updateFrame)  # フレーム・レートの調整
-        updateFrame()
+        # def updateFrame():
+        #     if self.stopFlag:
+        #         return
+        #
+        #     image = cv2.flip(image, 1)
+        #     cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #     self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
+        #     bitmap = self.wximage.ConvertToBitmap()
+        #     self.stbmp.SetBitmap(bitmap)
+        #
+        #
+        #     # bitmapの再描画
+        #     wx.CallLater(33, updateFrame)  # フレーム・レートの調整
+        # updateFrame()
+
+    def create_wx_bitmap_from_cv2_image(self, cv2_image):
+        cv2_rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+        resize_image = cv2.resize(cv2_rgb_image, (640, 480), cv2.INTER_LINEAR)
+        output = self.demo.evaluation(resize_image)
+        return wx.Bitmap.FromBuffer(640, 480, resize_image)
 
     def frame_close(self, event):
         self.stopFlag = True
@@ -101,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', default='202210110317_general_10cluster')
     args = parser.parse_args()
 
-    args.model_path = os.path.join('/home/yusuke/data/Facial_expression_detection_DG', args.model_path) 
+    args.model_path = os.path.join('/home/yusuke/data/Facial_expression_detection_DG', args.model_path)
     app = wx.App()
     frame = MyFrame(None, 'Facial_expression_prediction', model_name=args.model_name, train=args.train, num_domains=args.num_domains, path=args.model_path)
     # frame = wx.Frame(parent=None, id=-1, title="wxPython", size=(400, 400))
