@@ -74,7 +74,7 @@ class VideoView(wx.StaticBitmap):
 
 class Result_graph(wx.Panel):
     def __init__(self, parent, id):
-        super(Result_graph, self).__init__(parent, id, pos=(360, 0), size=(120, 120))
+        super(Result_graph, self).__init__(parent, id, size=(120, 120))
         self.SetBackgroundColour('WHITE')
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
@@ -101,11 +101,12 @@ class MyFrame(wx.Frame):
         panel = wx.Panel(self, wx.ID_ANY)
         img = wx.Image(self.image_size[0], self.image_size[1])
         self.video_frame = VideoView(panel, wx.ID_ANY, wx.Bitmap(img))
-        self.graph = Result_graph(self, wx.ID_ANY)
+        #self.graph = Result_graph(self, wx.ID_ANY)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(self.video_frame)
-        self.Fit()
+        #sizer.Add(self.graph)
+        #self.Fit()
 
         # # Read 1st frame
         # ret, image = cap.read()
