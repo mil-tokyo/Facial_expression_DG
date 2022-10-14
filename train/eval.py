@@ -41,7 +41,9 @@ def eval_demo(model, inputs, device):
     inputs = inputs.to(device)
 
     output = model(inputs)
-    output = nn.Softmax(output)
+    if isinstance(output, tuple):
+        output = output[0]
+    output = nn.functional.softmax(output, dim=1)
 
     return output.to('cpu').detach()
 

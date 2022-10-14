@@ -1,6 +1,8 @@
+import os
 import wx
 import numpy as np
 import cv2
+import torch
 import sys
 sys.path.append('../')
 from train.eval import eval_demo
@@ -9,6 +11,7 @@ import threading
 from PIL import Image
 from torchvision import transforms
 import argparse
+
 cap = cv2.VideoCapture(0)
 
 class FacialExpressionDemo:
@@ -17,7 +20,7 @@ class FacialExpressionDemo:
                                                      num_domains=num_domains, pretrained=False)
         self.best_model.load_state_dict(torch.load(os.path.join(
             path, 'models',
-            "model_best.pt"), map_location=device))
+            "model_best.pt"), map_location=torch.device('cpu')))
         self.best_model = self.best_model.to(device)
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -34,27 +37,30 @@ class FacialExpressionDemo:
             image = image.resize((256, 256))
         image = self.transform(image)
         image = torch.cat([image, image, image], dim=0)
-
-        output = eval_demo(image, device=self.device)
+        image = image.unsqueeze(0)
+        output = eval_demo(self.best_model, image, device=self.device)
 
         print(output)
+        _, pred = torch.max(output, dim=1)
+        labels = ['Neutral', 'Happy', 'Anger', 'Sad', 'Disgust', 'Fear', 'Surprise']
+        print(labels[pred])
         return output
 
 
-class MyFrame(wx.Frame):
+class MyFrame(wx.Frame): 
     def __init__(self, parent, title, model_name, train, num_domains, path):
         super(MyFrame, self).__init__(parent=parent, title=title)
         self.Bind(wx.EVT_CLOSE, self.frame_close)
         self.stopFlag = False
 
-        demo = FacialExpressionDemo(model_name=model_name, train=train, num_class=7, num_domains=num_domains, device=0, path=path)
+        self.demo = FacialExpressionDemo(model_name=model_name, train=train, num_class=7, num_domains=num_domains, device=0, path=path)
 
 
         # Read 1st frame
         ret, image = cap.read()
         image = cv2.flip(image, 1)
         cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        output = demo.evaluation(image)
+        # output = demo.evaluation(image)
 
         self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
         bitmap = self.wximage.ConvertToBitmap()
@@ -72,6 +78,7 @@ class MyFrame(wx.Frame):
             ret, image = cap.read()
             image = cv2.flip(image, 1)
             cv2image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            output = self.demo.evaluation(cv2image)
             self.wximage = wx.Image(cv2image.shape[1], cv2image.shape[0], cv2image)
             bitmap = self.wximage.ConvertToBitmap()
             self.stbmp.SetBitmap(bitmap)
@@ -91,9 +98,10 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='resnet')
     parser.add_argument('--train', default='general')
     parser.add_argument('--num_domains', default=10)
-    parser.add_argument('--model_path', default='')
+    parser.add_argument('--model_path', default='202210110317_general_10cluster')
     args = parser.parse_args()
 
+    args.model_path = os.path.join('/home/yusuke/data/Facial_expression_detection_DG', args.model_path) 
     app = wx.App()
     frame = MyFrame(None, 'Facial_expression_prediction', model_name=args.model_name, train=args.train, num_domains=args.num_domains, path=args.model_path)
     # frame = wx.Frame(parent=None, id=-1, title="wxPython", size=(400, 400))
