@@ -1,6 +1,27 @@
 # Domain Generalization Using a Mixture of Multiple Latent Domains
 ![model](https://user-images.githubusercontent.com/22876486/68654944-64933100-0572-11ea-8cd0-2ff148ca1843.png)
 This is the pytorch implementation of the AAAI 2020 poster paper "Domain Generalization Using a Mixture of Multiple Latent Domains".
+## Demo
+### Requirements
+Docker image: 
+```
+nvcr.io/milut/medical/krs-pytorch-demo:1.0.0
+```
+
+### command
+```angular2html
+sudo chmod 666 /dev/video0
+```
+
+docker run command:
+```angular2html
+docker run -it --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 -e DISPLAY=unix${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix -u `id -u` -v ${HOME}:${HOME} -w ${HOME} --device /dev/video1:/dev/video1:mwr --device /dev/video0:/dev/video0:mwr nvcr.io/milut/medical/krs-pytorch-demo:1.0.0 /bin/bash
+```
+
+command:
+```angular2html
+python gui.py
+```
 
 ## Requirements
 - A Python install version 3.6

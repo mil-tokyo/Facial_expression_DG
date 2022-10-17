@@ -41,7 +41,7 @@ class FacialExpressionDemo:
         output = eval_demo(self.best_model, image, device=self.device)
 
         print(output)
-        _, pred = torch.max(output, dim=1)
+        prob, pred = torch.max(output, dim=1)
         labels = ['Neutral', 'Happy', 'Anger', 'Sad', 'Disgust', 'Fear', 'Surprise']
         print(labels[pred])
         return output
@@ -74,38 +74,62 @@ class VideoView(wx.StaticBitmap):
 
 class Result_graph(wx.Panel):
     def __init__(self, parent, id):
-        super(Result_graph, self).__init__(parent, id, size=(120, 120))
-        self.SetBackgroundColour('WHITE')
+        super(Result_graph, self).__init__(parent, id, size=(640, 640))
+        self.SetBackgroundColour('#F5F5F5')
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+        label1 = wx.StaticText(self, -1, "Neutral", (20, 35))
+        label2 = wx.StaticText(self, -1, "Happy", (20, 85))
+        label3 = wx.StaticText(self, -1, "Anger", (20, 135))
+        label4 = wx.StaticText(self, -1, "Sad", (20, 185))
+        label5 = wx.StaticText(self, -1, "Disgust", (20, 235))
+        label6 = wx.StaticText(self, -1, "Fear", (20, 285))
+        label7 = wx.StaticText(self, -1, "Surprise", (20, 335))
+
+        self.preds = [0.0] * 7
 
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
-        dc.SetPen(wx.Pen('blue'))
-        dc.SetBrush(wx.Brush('blue'))
-        dc.DrawRectangle(20, 20, 260, 40)
-        dc.SetPen(wx.Pen('yellow'))
-        dc.SetBrush(wx.Brush('yellow'))
-        dc.DrawRectangle(20, 60, 200, 40)
-        dc.SetPen(wx.Pen('red'))
-        dc.SetBrush(wx.Brush('red'))
-        dc.DrawRectangle(20, 100, 160, 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 20, 500 * self.preds[0], 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 70, 500 * self.preds[1], 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 120, 500 * self.preds[2], 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 170, 500 * self.preds[3], 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 220, 500 * self.preds[4], 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 270, 500 * self.preds[5], 40)
+        dc.SetPen(wx.Pen('#FFA500'))
+        dc.SetBrush(wx.Brush('#FFA500'))
+        dc.DrawRectangle(100, 320, 500 * self.preds[6], 40)
 
 
 class MyFrame(wx.Frame):
     def __init__(self, parent, title, model_name, train, num_domains, path):
-        super(MyFrame, self).__init__(parent=parent, title=title)
+        super(MyFrame, self).__init__(parent=parent, title=title, size=(1400, 500))
         self.Bind(wx.EVT_CLOSE, self.frame_close)
         self.stopFlag = False
-        self.image_size = (320, 240)
+        self.image_size = (640, 480)
         self.demo = FacialExpressionDemo(model_name=model_name, train=train, num_class=7, num_domains=num_domains, device=0, path=path)
+        self.cascade = cv2.CascadeClassifier('/opt/conda/lib/python3.8/site-packages/cv2/data/haarcascade_frontalface_default.xml')
+
         panel = wx.Panel(self, wx.ID_ANY)
         img = wx.Image(self.image_size[0], self.image_size[1])
         self.video_frame = VideoView(panel, wx.ID_ANY, wx.Bitmap(img))
-        #self.graph = Result_graph(self, wx.ID_ANY)
+        self.graph = Result_graph(panel, wx.ID_ANY)
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(self.video_frame)
-        #sizer.Add(self.graph)
+        sizer.Add(self.graph)
+        panel.SetSizer(sizer)
         #self.Fit()
 
         # # Read 1st frame
@@ -158,7 +182,16 @@ class MyFrame(wx.Frame):
         cv2_image = cv2.flip(cv2_image, 1)
         cv2_rgb_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
         resize_image = cv2.resize(cv2_rgb_image, self.image_size, cv2.INTER_LINEAR)
-        output = self.demo.evaluation(resize_image)
+        face_detect_image = cv2.resize(cv2_rgb_image, (320, 240), cv2.INTER_LINEAR)
+        image_gray = cv2.cvtColor(face_detect_image, cv2.COLOR_BGR2GRAY)
+        face = self.cascade.detectMultiScale(image_gray)
+        if len(face) == 1:
+            x, y, w, h = face[0]
+            output = self.demo.evaluation(face_detect_image[x:x+w, y:y+h])
+            self.graph.preds = output.numpy()[0]
+        else:
+            self.graph.preds = [0.0] * 7
+        self.graph.Refresh()
         return wx.Bitmap.FromBuffer(self.image_size[0], self.image_size[1], resize_image)
 
     def frame_close(self, event):
