@@ -189,6 +189,14 @@ class MyFrame(wx.Frame):
             x, y, w, h = face[0]
             output = self.demo.evaluation(face_detect_image[x:x+w, y:y+h])
             self.graph.preds = output.numpy()[0]
+        elif len(face) == 2:
+            if face[0][0] < face[1][0]:
+                x, y, w, h = face[1]
+            else:
+                x, y, w, h = face[0]
+            output = self.demo.evaluation(face_detect_image[x:x + w, y:y + h])
+            self.graph.preds = output.numpy()[0]
+
         else:
             self.graph.preds = [0.0] * 7
         self.graph.Refresh()
